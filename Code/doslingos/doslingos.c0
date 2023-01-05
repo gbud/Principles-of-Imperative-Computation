@@ -1,0 +1,219 @@
+// gbudhija dos lingos
+
+#use <util>
+#use <conio>
+
+int ascii_check(string r, int i)
+{
+    return char_ord(string_charat(r, i));
+}
+
+int binsearch(string x, string[] A, int n)
+//@requires 0 <= n && n <= \length(A);
+//@requires string_is_sorted(A, 0, n);
+/*@ensures (\result == -1 && !string_is_in(x, A, 0, n))
+            || (0 <= \result && \result < n
+            && string_equal(A[\result],x)
+            && string_gt_seg(x, A, 0, \result)); @*/
+{
+    int lo = 0;
+    int hi = n;
+
+    while (lo < hi)
+    //@loop_invariant 0 <= lo;
+    //@loop_invariant lo <= hi;
+    //@loop_invariant hi <= n;
+    //@loop_invariant string_gt_seg(x, A, 0, lo);
+    //@loop_invariant string_le_seg(x, A, hi, n);
+    {
+        if (string_equal(A[lo],x))
+            return lo;
+        int mid = lo + (hi-lo)/2;
+        if (string_compare(A[mid],x) < 0)
+            lo = mid+1;
+        else { /*@assert(string_compare(A[mid],x) >= 0); @*/
+            hi = mid;
+        }
+    }
+    //@assert lo == hi;
+    if (lo != n && string_equal(A[lo],x)) return lo;
+    return -1;
+}
+
+
+bool no_dupes(string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+    for (int i = lo; i < hi; i++)
+    //@loop_invariant 0 <= i;
+    //@loop_invariant i <= hi;
+    {
+        for (int j = i+1; j < hi; j++)
+        //@loop_invariant i < j;
+        //@loop_invariant j <= hi;
+        {
+            if (string_equal(A[i],A[j]))
+                return false;
+        }
+    }
+    return true;
+}
+
+
+int count_vocab(string[] vocab, int[] freq, int v,
+                string corpus,
+                bool fast)
+//@requires v == \length(vocab) && v == \length(freq);
+//@requires string_is_sorted(vocab, 0, v);
+//@requires no_dupes(vocab, 0, v);
+{
+    
+    int vocab_count = 0;
+    char space = ' ';
+
+    //get lenth of corpus
+    int corpus_len = string_length(corpus);
+    if (corpus_len == 0) return vocab_count;
+
+    //get corpus word count
+    int corpus_count = 1;
+    for (int i = 0; i < corpus_len; i++)
+    //@loop_invariant 0 <= i && i <= corpus_len;
+    {
+        if (char_ord(string_charat(corpus, i)) == char_ord(space))
+            corpus_count ++;
+    }
+    
+    //set up corpus array + populate with corpus words
+    string[] corpus_array = alloc_array(string, corpus_count);
+    int string_start = 0;
+    int j = 0;
+    for (int k = 0; k < corpus_len; k++)
+    //@loop_invariant 0 <= j && j < corpus_count;
+    //@loop_invariant 0 <= k && k <= corpus_len;
+    {
+        if (k == corpus_len-1)
+            corpus_array[j] = string_sub(corpus, string_start, corpus_len);
+        if (char_ord(string_charat(corpus, k)) == char_ord(space))
+        {
+            corpus_array[j] = string_sub(corpus, string_start, k);
+            j++;
+            string_start = k + 1;
+        }
+    }
+
+    //loop through corpus_array
+    if (fast == true)
+    {
+        for (int l = 0; l < corpus_count; l++)
+        //@loop_invariant 0 <= l && l <= corpus_count;
+        {
+            if (binsearch(corpus_array[l], vocab, v) == -1) vocab_count ++;
+            else freq[binsearch(corpus_array[l], vocab, v)] ++;
+        }
+    }    
+    if (fast == false)
+    {
+        for (int l = 0; l < corpus_count; l++)
+        //@loop_invariant 0 <= l && l <= corpus_count;
+        {
+            if (linsearch(corpus_array[l], vocab, v) == -1) vocab_count ++;
+            else freq[linsearch(corpus_array[l], vocab, v)] ++;
+        }
+    }
+    return vocab_count;
+}
+
+
+void merge_by_freq(string[] vocab_A, int[] freq_A, int v)
+//@requires v == \length(vocab_A) && v == \length(freq_A); 
+//@requires int_is_sorted(freq_A, 0, v/2) && int_is_sorted(freq_A, v/2, v-v/2);
+//@ensures int_is_sorted(freq_A, 0, v); 
+{
+    string[] vocab_B = alloc_array(string, v);
+    int[] freq_B = alloc_array(int, v);
+    int i = 0;
+    int j = v/2;
+    int k = 0;
+
+    while (i < v/2 && j < v)
+    //@loop_invariant 0 <= i && i <= v/2;
+    //@loop_invariant v/2 <= j && j <= v;
+    //@loop_invariant k == i + (j - v/2);
+    {
+        if (freq_A[i] <= freq_A[j]) {
+            freq_B[k] = freq_A[i];
+            vocab_B[k] = vocab_A[i];
+            i++;
+        } else { //@assert freq_A[i] > freq_A[j];
+            freq_B[k] = freq_A[j];
+            vocab_B[k] = vocab_A[j];
+            j++;
+        }
+        k++;
+    }
+
+    //@assert i == v/2 || j == v;
+    // Exercise: write the omitted invariants for these loops
+    while (i < v/2) 
+    //@loop_invariant 0 <= i && i <= v/2;
+        {freq_B[k] = freq_A[i]; vocab_B[k] = vocab_A[i]; i++; k++;}
+    while (j < v) 
+    //@loop_invariant v/2 <= j && j <= v;
+        {freq_B[k] = freq_A[j]; vocab_B[k] = vocab_A[j]; j++; k++;}
+
+    // Copy sorted array back into A
+    for (k = 0; k < v; k++)
+    //@loop_invariant 0 <= k && k <= v;
+    {
+        freq_A[k] = freq_B[k];
+        vocab_A[k] = vocab_B[k];
+    }  
+}
+
+// mergesort
+void sort_by_freq(string[] vocab, int[] freq, int v)  
+//@requires v == \length(vocab) && v == \length(freq);  
+//@ensures int_is_sorted(freq, 0, v); 
+{
+    if (v <= 1) return;
+
+    int mid = v/2;                          
+        //@assert 0 < mid && mid < v;
+
+    //split first half
+    int[] freq_1     = alloc_array(int, mid);
+    string[] vocab_1 = alloc_array(string, mid);
+    for (int i = 0; i < mid; i++)
+    {
+        freq_1[i]  = freq[i];
+        vocab_1[i] = vocab[i];
+    }
+    sort_by_freq(vocab_1, freq_1, mid);         
+    for (int k = 0; k < mid; k++)
+    {
+        freq[k]  = freq_1[k];
+        vocab[k] = vocab_1[k];        
+    }
+    //@assert int_is_sorted(freq, 0, mid);
+
+    //split 2nd half
+    int[] freq_2     = alloc_array(int, v - mid);
+    string[] vocab_2 = alloc_array(string, v - mid);
+    for (int j = 0; j < v - mid; j++)
+    {
+        freq_2[j]  = freq[j+mid];
+        vocab_2[j] = vocab[j+mid];
+    }
+    sort_by_freq(vocab_2, freq_2, v - mid);     
+    for (int l = 0; l < v - mid; l++)
+    {
+        freq[l+mid]  = freq_2[l];
+        vocab[l+mid] = vocab_2[l];
+    }
+    //@assert int_is_sorted(freq, mid, v - mid);
+    
+    //combined sorted halves
+    merge_by_freq(vocab, freq, v);                  
+        //@assert int_is_sorted(freq, 0, v);
+}

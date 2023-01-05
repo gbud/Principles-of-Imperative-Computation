@@ -1,0 +1,101 @@
+/**************************************************************************/
+/*              COPYRIGHT Carnegie Mellon University 2022                 */
+/* Do not post this file or any derivative on a public site or repository */
+/**************************************************************************/
+/*
+ * String Buffer Library
+ *
+ * 15-122 Principles of Imperative Computation
+ * This version exposes the externals, requires
+ * discipline from client! */
+
+/*** Interface ***/
+
+struct strbuf_header {
+  int limit;
+  int len;
+  char[] buf;
+};
+typedef struct strbuf_header strbuf;
+
+bool is_strbuf_expected_length(char[] buf, int limit) {  
+  //@assert \length(buf) == limit;  
+  return true;  
+} 
+
+bool strbuf_terminated(char[] buf, int len)
+//@requires \length(buf) > len; 
+{
+  if (buf[len] != '\0') return false;
+  for (int i = 0; i < len; i++) {
+    if (buf[i] == '\0') return false;
+  }
+  return true;
+}
+
+bool is_strbuf(strbuf* sb)
+{
+  return sb != NULL
+      && sb->limit > 0
+      && is_strbuf_expected_length(sb->buf, sb->limit)
+      && strbuf_terminated(sb->buf, sb->len);
+      // && is_cstring(sb->buf, 0, sb->len);
+      // && string_terminated(sb->buf, sb->len);
+}
+
+strbuf* strbuf_new(int init_limit) // *Strictly* positive  
+//@requires init_limit > 0;
+//@ensures is_strbuf(\result);
+{
+  strbuf* new = alloc(strbuf);
+  new->limit = init_limit;
+  new->buf = alloc_array(char, init_limit);
+  new->buf[0] = '\0';
+  return new;
+}
+
+char[] strbuf_str(strbuf* sb)
+//@requires is_strbuf(sb);
+{
+  char[] new = strcpy(alloc_array(char, sb->len + 1), 0, sb->buf, 0);
+  return new;
+}
+
+void resize_strbuf(strbuf* sb, int len)
+//@requires (sb->len + len) <= int_max() / 2;
+{
+  int new_limit = (sb->len + len) * 2;
+  assert(new_limit > sb->limit);
+  char[] new_buf = alloc_array(char, new_limit);
+  sb->limit = new_limit;
+  for (int i = 0; i <= sb->len; i++) 
+  //@loop_invariant 0 <= i && i <= sb->limit;
+  {
+    new_buf[i] = sb->buf[i];
+  }
+  sb->buf = new_buf;
+}
+
+void strbuf_add(strbuf* sb, char[] str, int str_len)
+//@requires is_strbuf(sb);
+//@requires strlen(str, 0) == str_len;
+//@ensures is_strbuf(sb);
+{
+  if (str_len + sb->len >= sb->limit) {
+    resize_strbuf(sb, str_len);
+  }
+  for (int i = 0; i < str_len; i++) {
+    sb->buf[sb->len + i] = str[i];
+  }
+  sb->len = sb->len + str_len;
+  sb->buf[sb->len] = '\0';
+}
+
+void strbuf_addstr(strbuf* sb, char[] str)
+//@requires is_strbuf(sb);
+//@ensures is_strbuf(sb);
+{
+  strbuf_add(sb, str, strlen(str, 0));
+}
+
+/*** Implementation ***/

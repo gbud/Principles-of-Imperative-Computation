@@ -1,0 +1,106 @@
+// gbudhija parse
+
+#use <string>
+#use <parse>
+#use <conio>
+#use <args>
+
+//returns values from temp to stack S
+void restore_stack(stack_t S, stack_t temp)
+//@requires S != NULL && temp != NULL;
+{
+    while (!stack_empty(temp)) push(S, pop(temp));
+}
+
+bool is_precstack(dict_t D, stack_t S)  
+//@requires D != NULL && S != NULL;
+{
+    stack_t temp = stack_new();
+    int prev_prec = -1;
+    while (!stack_empty(S))
+    {
+        string curr = pop(S);
+        int curr_prec = dict_lookup(D, curr);
+        if (curr_prec == -1) {                          //return if not in D
+            restore_stack(S, temp);
+            return false;
+        }
+
+        if (stack_empty(temp)) prev_prec = curr_prec;   //set first prec
+
+        if (curr_prec > prev_prec) {                    //compare prec
+            restore_stack(S, temp);
+            return false;
+        } else {                                        //pass to temp stack
+            push(temp, pop(S));
+            prev_prec = curr_prec;
+        }
+    }
+    restore_stack(S, temp);
+    return true;
+}
+
+void reset_queue(queue_t Q, string s)
+//@requires Q != NULL;  
+{
+    queue_t temp = queue_new();
+    while (!queue_empty(Q)) enq(temp, deq(Q));
+    enq(Q, s);
+    while (!queue_empty(temp)) enq(Q, deq(temp));
+}
+
+queue_t parse(dict_t D, queue_t input)  
+//@requires D != NULL && input != NULL;  
+//@ensures \result == NULL || queue_empty(input);
+{
+    if (queue_empty(input)) return NULL;
+    
+    queue_t output = queue_new();
+    stack_t operators = stack_new();
+    bool phase = true;                                  //true=int, false=oper
+    
+    //main operation
+    while (!queue_empty(input))
+    {
+        if (phase) {                                    //if INT PHASE
+            
+            string tok = deq(input);                    //checks out of place
+            int* ptr = parse_int(tok, 10);              //symbol
+            if (ptr == NULL) return NULL;
+
+            enq(output, tok);
+            phase = false;
+        }
+        else {                                          //if OPER PHASE
+            
+            string tok = deq(input);                    //checks out of place
+            int* ptr = parse_int(tok, 10);              //integer
+            if (ptr != NULL) return NULL;
+            
+            if (stack_empty(operators)) {               //if oper stack empty
+                push(operators, tok);
+                phase = true;
+            } else {                                    //if operstack !empty
+                string oper_from_stack = pop(operators);
+                string oper_from_input = tok;
+                int prec_oper_stack = dict_lookup(D, oper_from_stack);
+                int prec_oper_input = dict_lookup(D, oper_from_input);
+                if (prec_oper_stack == -1 || prec_oper_input == -1){
+                    return NULL;
+                }
+                if (prec_oper_stack >= prec_oper_input) {
+                    enq(output, oper_from_stack);
+                    reset_queue(input, oper_from_input);
+                } else {
+                    push(operators, oper_from_stack);
+                    push(operators, oper_from_input);
+                    phase = true;
+                }
+            }
+        }
+    }
+
+    //empty operator stack to output
+    while (!stack_empty(operators)) enq(output, pop(operators));
+    return output;
+}

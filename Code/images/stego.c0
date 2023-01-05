@@ -1,0 +1,128 @@
+// gbudhija stego my waffles //
+
+#use <util>
+#use <conio>
+
+// shifts first q bits to the last q bits of each channel
+// and sets first 8-q bits of each channel to 0
+int hide_pixel(pixel_t p, int q)
+//@requires 0 < q && q < 8;
+//@ensures 0 <= get_red(\result) && get_red(\result) < 256;
+//@ensures 0 <= get_green(\result) && get_green(\result) < 256;
+//@ensures 0 <= get_blue(\result) && get_blue(\result) < 256;
+{
+    // shift from left to push the first q bits to the last q bits
+    int shift_from_left = 8 - q;
+    // shift from right to set first 8-q bits to 0
+    int shift_from_right = ~(0xFF << q);
+
+    // shifts first q bits of channel to last q bits of channel
+    int alpha_shift = (get_alpha(p)) >> shift_from_left;
+    int red_shift   = (get_red(p))   >> shift_from_left;
+    int green_shift = (get_green(p)) >> shift_from_left;
+    int blue_shift  = (get_blue(p))  >> shift_from_left;
+
+    // set from 8-q bits to 0
+    int hide_alpha  = alpha_shift & shift_from_right;
+    int hide_red    = red_shift   & shift_from_right;
+    int hide_green  = green_shift & shift_from_right;
+    int hide_blue   = blue_shift  & shift_from_right;
+
+    return make_pixel(hide_alpha, hide_red, hide_green, hide_blue);
+}
+
+pixel_t[] hide(pixel_t[] cover, pixel_t[] secret,
+               int width, int height, int quality)
+//@requires is_valid_imagesize(width, height) == true;
+//@requires \length(cover) == width * height;
+//@requires \length(cover) == \length(secret);
+//@requires 0 < quality && quality < 8;
+{
+    pixel_t[] stego = alloc_array(pixel_t, width*height);
+
+    for (int j = 0; j < height; j++)
+    //@loop_invariant 0 <= j;
+    {
+        for (int i = 0; i < width; i++)
+        //@loop_invariant 0 <= i;
+        {
+            //@assert 0 <= j && j < height && 0 <= i && i < width;
+            int index = get_index(j, i, width, height);
+            //@assert 0 <= index && index < \length(stego);
+            //@assert \length(cover) == \length(stego);
+
+            // pluck channel values of cover pixel
+            int cover_alpha  = get_alpha(cover[index]);
+            int cover_red    = get_red(cover[index]);
+            int cover_green  = get_green(cover[index]);
+            int cover_blue   = get_blue(cover[index]);
+
+            // hidden pixel is shifted channels of secret pixel with
+            // first `q bits set to last q bits and
+            // first 8-q bit set to 0
+            int hidden_pixel = hide_pixel(secret[index], quality);
+            int hidden_alpha = get_alpha(hidden_pixel);
+            int hidden_red   = get_red(hidden_pixel);
+            int hidden_green = get_green(hidden_pixel);
+            int hidden_blue  = get_blue(hidden_pixel);
+
+            // stego channels with first 8-q bits from cover and
+            // last q bits from hidden
+            int stego_alpha = cover_alpha | hidden_alpha;
+            int stego_red   = cover_red   | hidden_red;
+            int stego_green = cover_green | hidden_green;
+            int stego_blue  = cover_blue  | hidden_blue;
+
+            stego[index] = make_pixel(stego_alpha, stego_red,
+                                      stego_green, stego_blue);
+        }
+    }
+    return stego;
+}
+
+int unhide_pixel(pixel_t p, int q)
+//@requires 0 < q && q < 8;
+//@ensures 0 <= get_red(\result) && get_red(\result) < 256;
+//@ensures 0 <= get_green(\result) && get_green(\result) < 256;
+//@ensures 0 <= get_blue(\result) && get_blue(\result) < 256;
+{
+    // pluck stego channels
+    int stego_alpha = get_alpha(p);
+    int stego_red   = get_red(p);
+    int stego_green = get_green(p);
+    int stego_blue  = get_blue(p);
+
+    // shift channels so last q bits are first 8 bits
+    int shift = 8 - q;
+    int recover_alpha = (stego_alpha << shift) % 256;
+    int recover_red   = (stego_red   << shift) % 256;
+    int recover_green = (stego_green << shift) % 256;
+    int recover_blue  = (stego_blue  << shift) % 256;
+
+    return make_pixel(recover_alpha, recover_red,
+                      recover_green, recover_blue);
+}
+
+pixel_t[] unhide(pixel_t[] stego, int width, int height, int quality)
+//@requires is_valid_imagesize(width, height) == true;
+//@requires \length(stego) == width * height;
+//@requires 0 < quality && quality < 8;
+{
+    pixel_t[] recovered = alloc_array(pixel_t, width*height);
+
+    for (int j = 0; j < height; j++)
+    //@loop_invariant 0 <= j;
+    {
+        for (int i = 0; i < width; i++)
+        //@loop_invariant 0 <= i;
+        {
+            //@assert 0 <= j && j < height && 0 <= i && i < width;
+            int index = get_index(j, i, width, height);
+            //@assert 0 <= index && index < \length(recovered);
+            //@assert \length(stego) == \length(recovered);
+
+            recovered[index] = unhide_pixel(stego[index], quality);
+        }
+    }
+    return recovered;
+}

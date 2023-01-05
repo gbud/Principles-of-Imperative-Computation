@@ -1,0 +1,97 @@
+/**************************************************************************/
+/*              COPYRIGHT Carnegie Mellon University 2022                 */
+/* Do not post this file or any derivative on a public site or repository */
+/**************************************************************************/
+#use <util>
+#use <conio>
+
+/* The pixel type and an interface to pixels */
+
+typedef int pixel;       // Library (concrete) view of a pixel
+
+
+// Returns an int representing an ARGB pixel consisting of the given
+// alpha, red, green and blue intensity values.
+// PRECONDITION: all intensity values must be between 0 and 255,
+// inclusive.
+pixel make_pixel(int alpha, int red, int green, int blue)
+//@requires 0 <= alpha && alpha < 256;
+//@requires 0 <= red && red < 256;
+//@requires 0 <= green && green < 256;
+//@requires 0 <= blue && blue < 256;
+{
+    int A = 0xFFFFFF00;
+    int B = A | alpha;
+    int C = B << 8;
+    int D = C | red;
+    int E = D << 8;
+    int F = E | green;
+    int G = F << 8;
+    int H = G | blue;
+    return H;
+
+}
+
+// Returns the alpha component of the given pixel p.
+// POSTCONDITION: returned value is between 0 and 255, inclusive.
+int get_alpha(pixel p)
+//@ensures 0 <= \result && \result < 256;
+{
+    int A = p >> 24;
+    int B = A ^ 0xFFFFFF00;
+    return B;
+}
+
+// Returns the red component of the given pixel p.
+// POSTCONDITION: returned value is between 0 and 255, inclusive.
+int get_red(pixel p)
+//@ensures 0 <= \result && \result < 256;
+{
+    int A = p >> 16;
+    int B = 0x000000FF & A;
+    if (B < 0) {
+        int C = B % 256;
+        return C;
+    } else {
+    return B;
+    }
+}
+
+// Returns the green component of the given pixel p.
+// POSTCONDITION: returned value is between 0 and 255, inclusive.
+int get_green(pixel p)
+//@ensures 0 <= \result && \result < 256;
+{
+    int A = p >> 8;
+    int B = 0x000000FF | A;
+    if (B < 0) {
+        int C = 256 + B;
+        return C;
+    } else {
+    return B;
+    }
+}
+
+// Returns the blue component of the given pixel p.
+// POSTCONDITION: returned value is between 0 and 255, inclusive.
+int get_blue(pixel p)
+//@ensures 0 <= \result && \result < 256;
+{
+    int B = 0x000000FF & p;
+    if (B < 0) {
+        int C = 256 + B;
+        return C;
+    } else {
+    return B;
+    }
+}
+
+
+// Do not write code below this line
+
+// Prints a pixel to terminal
+void pixel_print(pixel p) {
+  printf("%s", int2hex(p)); flush();
+}
+
+typedef pixel pixel_t;   // Client (abstract) view of a pixel

@@ -1,0 +1,212 @@
+/**************************************************************************/
+/*              COPYRIGHT Carnegie Mellon University 2022                 */
+/* Do not post this file or any derivative on a public site or repository */
+/**************************************************************************/
+/*
+ * Interface for dictionaries
+ *
+ * 15-122 Principles of Imperative Computation
+ */
+
+#use <string>
+#use <conio>
+
+/************************************************************************/
+/************************* BEGIN IMPLEMENTATION *************************/
+
+/* FUNCTIONS MODIFIED FROM stack_of_int AND queue_of_string LIBRARY */
+
+/* Aux structure of linked lists of dict nodes */
+typedef struct dict_node node;
+struct dict_node {
+  int precedence;
+  string[] operators;
+  int num_operators;
+  node* next;
+};
+
+/* is_segment_dict(start, end) will diverge if list is circular! */
+bool is_segment_dict(node* start, node* end) {
+  if (start == NULL) return false;
+  if (start == end) return true;
+  return is_segment_dict(start->next, end);
+}
+
+/* linked lists of dictionary nodes */
+
+typedef struct dict_header dict;
+struct dict_header {
+  node* start;
+  node* end;
+};
+
+/* from doslingos.c0 */
+bool no_dupes(string[] A, int n)
+/*@requires n == \length(A); @*/
+{
+    for (int i = 0; i < n; i++)
+    //@loop_invariant 0 <= i;
+    //@loop_invariant i <= n;
+    {
+        for (int j = i+1; j < n; j++)
+        //@loop_invariant i < j;
+        //@loop_invariant j <= n;
+        {
+            if (string_equal(A[i],A[j]))
+                return false;
+        }
+    }
+    return true;
+}
+
+bool non_negative(node* start, node* end){
+  if (start->precedence < 0) return false;
+  if (start == end) return true;
+  return non_negative(start->next, end);
+}
+
+// bool no_dupes_dict(dict* D, node* start, node* end){
+//   if (start == end) return true;
+//   else {
+//     int n = start->num_operators;
+//     string[] operators = start->operators;
+//     for (int i = 0; i < n; i++) {
+//       if (dict_lookup(D, operators[i]) != -1) return false;
+//     }
+//   }
+//   return no_dupes_dict(D, start->next, end);
+// }
+
+int total_operators(node* start, node* end){
+  if (start == end) return 0;
+  else return start->num_operators + total_operators(start->next, end);
+}
+
+string[] full_op_list(node* start, node* end, string[] list, int len){
+  if (start == end) return list;
+  else {
+    int len_new = len + start->num_operators;
+    string[] new = alloc_array(string, len_new);
+    for (int i = 0; i < len; i++) {
+      new[i] = list[i];
+    }
+    for (int j = len; j < len_new; j++) {
+      new[j] = start->operators[j-len];
+    }
+    return full_op_list(start->next, end, new, len_new);
+  }
+}
+
+bool no_dupes_dict(node* start, node* end) {
+  int init_len = start->num_operators;
+  string[] init_op_list = alloc_array(string, init_len);
+  string[] full_list = full_op_list(start->next, end, init_op_list, init_len);
+  return no_dupes(full_list, total_operators(start, end));
+}
+
+bool is_dict(dict* D) {
+  return D != NULL
+      && is_segment_dict(D->start, D->end)
+      && non_negative(D->start, D->end)
+      && no_dupes_dict(D->start, D->end);
+}
+
+bool dict_empty(dict* D)
+//@requires is_dict(D);
+{
+  return D->start == D->end;
+}
+
+bool is_in_node(string[] N, int n, string oper)
+/*@requires \length(N) == n; @*/
+{
+  for (int i = 0; i < n; i++)
+  //@loop_invariant 0 <= i && i <= n;
+  {
+    if (string_equal(N[i], oper)) return true;
+  } 
+  return false;
+}
+
+int dict_lookup(dict* D, string oper)
+/*@requires D != NULL; @*/
+/*@requires is_dict(D); @*/
+/*@ensures \result >= -1; @*/
+{
+  if (D->start == D->end) return -1;
+  node* curr = D->start;
+  while (curr != D->end) {
+    string[] operators = curr->operators;
+    int num_operators = curr->num_operators;
+    if (is_in_node(operators, num_operators, oper)) return curr->precedence;
+    else curr = curr->next;    
+  }
+  return -1;
+}
+
+dict* dict_new(string[] A, int n)
+/*@requires \length(A) == n; @*/
+/*@requires is_infix_array(A, n); @*/
+/*@ensures is_dict(\result); @*/
+{
+  dict* D = alloc(dict);
+  node* d = alloc(node);
+  D->start = d;
+  D->end = d;
+  node* new = alloc(node);
+  for (int i = 0; i < n; i++)
+  //@loop_invariant 0 <= i && i <= n;
+  {
+    string[] index = parse_tokens(A[i]);
+    int num = num_tokens(A[i]);
+    if (!no_dupes(index, num)) {            //checks no dupes in same precedence
+      D = NULL;
+      //@assert D == NULL;
+      return D;
+    }
+    for (int j = 0; j < num; j++)           //checks no dupes in dict
+    {
+      if (dict_lookup(D, index[j]) != -1){
+        D = NULL;
+        //@assert D == NULL;
+        return D;
+      }
+    }
+    if (is_infix_array(index, num)) {       //sets new node to dict
+      new->precedence = i;
+      new->operators = index;
+      new->num_operators = num;
+      new->next = D->start;
+      D->start = new;
+      new = alloc(node);
+      //@assert !dict_empty(D);
+    }
+  }
+  return D;
+}
+
+
+// Advice: implementing a dict_print function may help you debug
+
+/****************************** and HERE ******************************/
+typedef dict* dict_t;
+
+/************************** END IMPLEMENTATION **************************/
+/************************************************************************/
+
+/* Interface of dictionaries (leave this alone) */
+
+/************************************************************************/
+/******************************* Interface ******************************/
+
+// typedef ______* dict_t;
+
+// Returns NULL if the input array has the same operator twice
+dict_t dict_new(string[] A, int n)
+  /*@requires \length(A) == n; @*/
+  /*@requires is_infix_array(A, n); @*/ ;
+
+// Returns -1 if no definition is found
+int dict_lookup(dict_t D, string oper)
+  /*@requires D != NULL; @*/
+  /*@ensures \result >= -1; @*/ ;

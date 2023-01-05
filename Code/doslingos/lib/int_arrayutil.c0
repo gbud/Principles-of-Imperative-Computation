@@ -1,0 +1,180 @@
+/**************************************************************************/
+/*              COPYRIGHT Carnegie Mellon University 2022                 */
+/* Do not post this file or any derivative on a public site or repository */
+/**************************************************************************/
+/* Utility functions for working with arrays of integers
+ * Mostly specification functions, but swap is effectful
+ *
+ * 15-122 Principles of Imperative Computation */
+
+
+#use <conio>
+
+/************************************************************************/
+/************************* BEGIN IMPLEMENTATION *************************/
+
+bool int_is_in(int x, int[] A, int lo, int hi)
+//@requires 0 <= lo && lo <= hi && hi <= \length(A);
+{
+  if (lo == hi) return false;
+  return A[lo] == x || int_is_in(x,A,lo+1,hi);
+}
+
+void int_swap(int[] A, int i, int j)
+//@requires 0 <= i && i < \length(A);
+//@requires 0 <= j && j < \length(A);
+{
+  int tmp = A[i];
+  A[i] = A[j];
+  A[j] = tmp;
+}
+
+bool int_gt_seg(int x, int[] A, int lo, int hi)
+//@requires 0 <= lo && lo <= hi && hi <= \length(A);
+{
+  if (lo == hi) return true;
+  return x > A[lo] && int_gt_seg(x, A, lo+1, hi);
+}
+
+bool int_ge_seg(int x, int[] A, int lo, int hi)
+//@requires 0 <= lo && lo <= hi && hi <= \length(A);
+{
+  if (lo == hi) return true;
+  return x >= A[lo] && int_ge_seg(x, A, lo+1, hi);
+}
+
+bool int_lt_seg(int x, int[] A, int lo, int hi)
+//@requires 0 <= lo && lo <= hi && hi <= \length(A);
+{
+  if (lo == hi) return true;
+  return x < A[lo] && int_lt_seg(x, A, lo+1, hi);
+}
+
+bool int_le_seg(int x, int[] A, int lo, int hi)
+//@requires 0 <= lo && lo <= hi && hi <= \length(A);
+{
+  if (lo == hi) return true;
+  return x <= A[lo] && int_le_seg(x, A, lo+1, hi);
+}
+
+bool int_is_sorted(int[] A,
+               int lo,
+               int hi)
+//@requires 0 <= lo && lo <= hi && hi <= \length(A);
+{
+  if (lo == hi) return true;
+  return int_le_seg(A[lo], A, lo+1, hi) && int_is_sorted(A, lo+1, hi);
+}
+
+bool int_gt_segs(int[] A, int lo1, int hi1, int[] B, int lo2, int hi2)
+//@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A);
+//@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B);
+{
+  if (lo1 == hi1) return true;
+  return int_gt_seg(A[lo1], B, lo2, hi2)
+      && int_gt_segs(A, lo1+1, hi1, B, lo2, hi2);
+}
+
+bool int_ge_segs(int[] A, int lo1, int hi1, int[] B, int lo2, int hi2)
+//@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A);
+//@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B);
+{
+  if (lo1 == hi1) return true;
+  return int_ge_seg(A[lo1], B, lo2, hi2)
+      && int_ge_segs(A, lo1+1, hi1, B, lo2, hi2);
+}
+
+bool int_lt_segs(int[] A, int lo1, int hi1, int[] B, int lo2, int hi2)
+//@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A);
+//@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B);
+{
+  if (lo1 == hi1) return true;
+  return int_lt_seg(A[lo1], B, lo2, hi2)
+      && int_lt_segs(A, lo1+1, hi1, B, lo2, hi2);
+}
+
+bool int_le_segs(int[] A, int lo1, int hi1, int[] B, int lo2, int hi2)
+//@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A);
+//@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B);
+{
+  if (lo1 == hi1) return true;
+  return int_le_seg(A[lo1], B, lo2, hi2)
+      && int_le_segs(A, lo1+1, hi1, B, lo2, hi2);
+}
+
+void int_print_seg(int[]A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+  printf("array[%d,%d) = [", lo, hi);
+  for (int i = lo; i < hi; i++)
+  //@loop_invariant lo <= i && i <= hi;
+  {
+    printf("%d", A[i]);
+    if (i != hi-1) printf(", ");
+  }
+  printf("]");
+}
+
+/************************** END IMPLEMENTATION **************************/
+/************************************************************************/
+
+/************************************************************************/
+/******************************* Interface ******************************/
+
+/* int_is_in: x in A[lo,hi) */
+bool int_is_in(int x, int[] A, int lo, int hi)
+/*@requires 0 <= lo  && lo <= hi && hi <= \length(A); @*/ ;
+
+/* int_is_sorted: A[lo,hi) SORTED */
+bool int_is_sorted(int[] A, int lo, int hi)
+/*@requires 0 <= lo  && lo <= hi && hi <= \length(A); @*/ ;
+
+/* int_swap(A, i, j) has the effect of switching A[i] and A[j] */
+void int_swap(int[] A, int i, int j)
+/*@ requires 0 <= i && i < \length(A) && 0 <= j && j < \length(A); @*/ ;
+
+
+/* int_gt_seg: x > A[lo,hi) */
+bool int_gt_seg(int x, int[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;
+
+/* int_ge_seg: x >= A[lo,hi) */
+bool int_ge_seg(int x, int[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;
+
+/* int_lt_seg: x < A[lo,hi) */
+bool int_lt_seg(int x, int[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;
+
+/* int_le_seg: x <= A[lo,hi) */
+bool int_le_seg(int x, int[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;
+
+
+/* int_gt_segs: A[lo1,hi1) > B[lo2,hi2) */
+bool int_gt_segs(int[] A, int lo1, int hi1,
+                 int[] B, int lo2, int hi2)
+/*@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A); @*/
+/*@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B); @*/ ;
+
+/* int_ge_segs: A[lo1,hi1) >= B[lo2,hi2) */
+bool int_ge_segs(int[] A, int lo1, int hi1,
+                 int[] B, int lo2, int hi2)
+/*@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A); @*/
+/*@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B); @*/ ;
+
+/* int_lt_segs: A[lo1,hi1) < B[lo2,hi2) */
+bool int_lt_segs(int[] A, int lo1, int hi1,
+                 int[] B, int lo2, int hi2)
+/*@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A); @*/
+/*@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B); @*/ ;
+
+/* int_le_segs: A[lo1,hi1) <= B[lo2,hi2) */
+bool int_le_segs(int[] A, int lo1, int hi1,
+                 int[] B, int lo2, int hi2)
+/*@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A); @*/
+/*@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B); @*/ ;
+
+/* int_print_seg: prints A[lo, hi) */
+void int_print_seg(int[]A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;

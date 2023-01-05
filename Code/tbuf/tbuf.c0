@@ -1,0 +1,194 @@
+/**************************************************************************/
+/*              COPYRIGHT Carnegie Mellon University 2022                 */
+/* Do not post this file or any derivative on a public site or repository */
+/**************************************************************************/
+/*
+ * Text buffers as doubly linked lists.
+ *
+ * 15-122 Principles of Imperative Computation */
+
+/*** Interface ***/
+
+
+typedef struct dll_node dll;
+struct dll_node {
+  dll* next;
+  char data;
+  dll* prev;
+};
+
+typedef struct tbuf_header tbuf;
+struct tbuf_header {
+  dll* start;  /* the fist node of the list (on the left)  */
+  dll* cursor; /* the position where the cursor is displayed */
+  dll* end;    /* the last node of the list (on the right) */
+};
+
+// modified from dict.c0
+bool is_dll_segment(dll* a, dll* b) {
+  if (a == NULL || b == NULL) return false;
+  if (a == b) return true;
+  else {
+    if (a->next->prev != a || a->next->prev->next != a->next ||
+        b->prev->next != b) return false;
+    return is_dll_segment(a->next, b);
+  }
+}
+
+bool is_dll_segment_backward(dll* a, dll* b) {
+  if (a == NULL || b == NULL) return false;
+  if (b->prev == a) return true;
+  else {
+    if (a->next->prev != a || b->prev->next->prev != b->prev ||
+        b->prev->next != b) return false;
+    return is_dll_segment_backward(a, b->prev);
+  }
+}
+
+bool is_valid_cursor(tbuf* B){
+  if (B->cursor == B->start) return false;
+  return B->cursor->prev->next == B->cursor 
+      && (B->cursor == B->end ||
+          B->cursor->next->prev == B->cursor);
+}
+
+bool is_tbuf(tbuf* B) {
+  return B != NULL
+      && B->start != NULL
+      && B->cursor != NULL
+      && B->end != NULL
+      && B->start != B->end
+      && B->start != B->cursor
+      && is_dll_segment(B->start, B->cursor)
+      && is_dll_segment(B->cursor, B->end)
+      && is_dll_segment(B->start, B->end)
+      && is_dll_segment_backward(B->start, B->end)
+      && is_valid_cursor(B);
+}
+
+bool is_tbuf_empty(tbuf* B)
+//@requires is_tbuf(B);
+{
+  return B->start->next == B->end;
+}
+
+/* Returns true if the cursor is in leftmost position */
+bool tbuf_at_left(tbuf* B) 
+//@requires is_tbuf(B);
+{
+  return B->cursor->prev == B->start;
+}
+
+/* Returns true if the cursor is in rightmost position */
+bool tbuf_at_right(tbuf* B)
+//@requires is_tbuf(B);
+{
+  return B->cursor == B->end;
+}
+
+/* Creates a new, empty text buffer */
+tbuf* tbuf_new()
+//@ensures is_tbuf(\result);
+//@ensures is_tbuf_empty(\result);
+{
+  tbuf* T = alloc(tbuf);
+  dll* a = alloc(dll);
+  dll* b = alloc(dll);
+  T->start = a;
+  T->cursor = b;
+  T->end = b;
+  a->next = b;
+  b->prev = a;
+  return T;
+}
+
+/* Moves the cursor forward (right) */
+void tbuf_forward(tbuf* B)
+//@requires is_tbuf(B);
+//@requires B->cursor != B->end;
+//@ensures is_tbuf(B);
+{
+  B->cursor = B->cursor->next;
+}
+
+/* Moves the cursor backward (left) */
+void tbuf_backward(tbuf* B)
+//@requires is_tbuf(B);
+//@requires B->cursor->prev != B->start;
+//@ensures is_tbuf(B);
+{
+  B->cursor = B->cursor->prev;
+}
+
+/* Insert a character before cursor */
+void tbuf_insert(tbuf* B, char c)
+//@requires is_tbuf(B);
+//@ensures is_tbuf(B);
+{
+  dll* insert = alloc(dll);
+  insert->data = c;
+  insert->prev = B->cursor->prev;
+  insert->prev->next = insert;
+  B->cursor->prev = insert;
+  insert->next = B->cursor;
+}
+
+/* Remove character before cursor (and returns the deleted char)   */
+char tbuf_delete(tbuf* B)
+//@requires is_tbuf(B);
+//@requires B->cursor->prev != B->start;
+//@ensures is_tbuf(B);
+{
+  char result = B->cursor->prev->data;
+  dll* temp = alloc(dll);
+  temp->prev = B->cursor->prev->prev;
+  temp->next = B->cursor->prev;
+
+  temp->prev->next = B->cursor;
+  B->cursor->prev->prev = NULL;
+  B->cursor->prev = temp->prev;
+  temp->next->next = NULL;
+
+  temp->prev = NULL;
+  temp->next = NULL;
+  temp = NULL;
+
+  return result;
+}
+
+/* Recursively counts newlines in text body until start  */
+int tbuf_row_rec(dll* a, dll*b)
+{
+  if (b->prev == a) return 1;
+  else {
+    if (b->prev->data == '\n') return 1 + tbuf_row_rec(a, b->prev);
+    else return tbuf_row_rec(a, b->prev);
+  } 
+}
+
+/* Returns the row of the cursor    */
+int tbuf_row(tbuf* B)
+//@requires is_tbuf(B);
+//@ensures is_tbuf(B);
+{
+  return tbuf_row_rec(B->start, B->cursor);
+}
+
+/* Recursively counts spaces in line until newline  */
+int tbuf_col_rec(dll* a, dll*b)
+{
+  if (b->prev->data == '\n' || b->prev == a) return 0;
+  else {
+    return 1 + tbuf_col_rec(a, b->prev);
+  } 
+}
+
+/* Returns the column of the cursor */
+int tbuf_col(tbuf* B)
+//@requires is_tbuf(B);
+//@ensures is_tbuf(B);
+{
+  return tbuf_col_rec(B->start, B->cursor);
+}
+
+/*** Implementation ***/

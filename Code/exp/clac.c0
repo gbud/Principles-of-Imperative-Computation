@@ -1,0 +1,84 @@
+// gbudhija clac
+
+#use <string>
+#use <parse>
+#use <conio>
+#use <args>
+
+// Specification function! from class notes
+int POW(int b, int e)
+//@requires e >= 0;
+{
+  if (e == 0) return 1;
+  return POW(b, e-1) * b;
+}
+
+//safety check for stack operations on 2 integers
+bool istack_2_or_more(istack_t S)
+//@requires S != NULL;
+{
+    istack_t temp = istack_new();
+    for (int i = 0; i < 2; i++)
+    {
+        if (istack_empty(S)) 
+        {
+            while (!istack_empty(temp)) 
+            {
+                ipush(S, ipop(temp));
+            }
+            //@assert istack_empty(temp);
+            return false;
+        }
+        else ipush(temp, ipop(S));
+    }
+    for (int j = 0; j < 2; j++)
+    {
+        ipush(S, ipop(temp));
+    }
+    //@assert !istack_empty(S);
+    //@assert istack_empty(temp);
+    return true;
+}
+
+// checks token and operates on last 2 values of stack if token is valid
+void operate(istack_t S, string tok)
+//@requires S != NULL;
+//@ensures !istack_empty(S);
+{
+    string A = "+";
+    string B = "-";
+    string C = "*";
+    string D = "/";
+    string E = "**";
+    if (!(string_equal(A, tok) || string_equal(B, tok) ||
+          string_equal(C, tok) || string_equal(D, tok) ||
+          string_equal(E, tok))) error("undefined token");
+    int y = ipop(S);
+    int x = ipop(S);
+    if (string_equal(A, tok)) ipush(S, x+y);
+    if (string_equal(B, tok)) ipush(S, x-y);
+    if (string_equal(C, tok)) ipush(S, x*y);
+    if (string_equal(D, tok)) {
+        if (y == 0) error("error: division by 0");
+        ipush(S, x/y);
+    }
+    if (string_equal(E, tok)) ipush(S, POW(x,y));
+    return;
+}
+
+void eval(istack_t S, queue_t Q)  
+//@requires S != NULL && Q != NULL;  
+//@ensures queue_empty(Q);
+{
+    while (!queue_empty(Q))
+    {
+        string tok = deq(Q);
+        int* ptr = parse_int(tok, 10);
+        if (ptr != NULL) ipush(S, *ptr);
+        else {
+            if (istack_2_or_more(S)) operate(S, tok);
+            else error("less than 2 ints in stack");
+        }
+    }
+    return;
+}

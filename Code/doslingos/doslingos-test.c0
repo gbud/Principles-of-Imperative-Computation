@@ -1,0 +1,94 @@
+/**************************************************************************/
+/*              COPYRIGHT Carnegie Mellon University 2022                 */
+/* Do not post this file or any derivative on a public site or repository */
+/**************************************************************************/
+#use <conio>
+#use <util>
+#use <parse>
+
+// You are welcome to define helper functions for your tests
+
+int main() {
+  // Create a few vocabularies and the corresponding frequences by hand
+  string[] greg_vocab = alloc_array(string, 6);
+  greg_vocab[0] = "dawg";
+  greg_vocab[1] = "going";  
+  greg_vocab[2] = "how's";
+  greg_vocab[3] = "it";
+  greg_vocab[4] = "sup";
+  greg_vocab[5] = "sup";
+  assert(no_dupes(greg_vocab, 0, 5) == true);
+  assert(no_dupes(greg_vocab, 0, 6) == false);
+  greg_vocab[4] = "nice";
+  assert(no_dupes(greg_vocab, 0, 6) == true);
+
+  // Later on, read some vocabularies from file and create their frequency array
+  string corpus_test = "my dawg its been going well";
+  int[] greg_freq = alloc_array(int, 6);
+  greg_freq[0] = 7;
+  greg_freq[1] = 1;
+  greg_freq[2] = 3;
+  greg_freq[3] = 5;
+  greg_freq[4] = 1;
+  greg_freq[5] = 4;
+  assert(count_vocab(greg_vocab, greg_freq, 6, corpus_test, true) == 4);
+  assert(greg_freq[0] == 8);
+  assert(greg_freq[1] == 2);
+  assert(greg_freq[2] == 3);
+  assert(greg_freq[3] == 5);
+  assert(greg_freq[4] == 1);
+  assert(greg_freq[5] == 4);
+
+  // Using them, test the functions you wrote in file doslingos.c0
+  sort_by_freq(greg_vocab, greg_freq, 6);
+  assert(greg_freq[0] == 1);
+  assert(greg_freq[5] == 8);
+  string check_1 = "nice";
+  string check_2 = "dawg";
+  assert(string_equal(greg_vocab[0],check_1));
+  assert(string_equal(greg_vocab[5],check_2));
+
+  //Test Odd array
+  string[] vocab_test_2 = alloc_array(string, 5);
+  vocab_test_2[0] = "abcd";
+  vocab_test_2[1] = "bcde";  
+  vocab_test_2[2] = "cdef";
+  vocab_test_2[3] = "defg";
+  vocab_test_2[4] = "efgh";
+
+  string corpus_test_2 = "abcd bcde abcd abcd abcd jfkd pwoef";
+  int[] freq_test_2 = alloc_array(int, 5);
+  freq_test_2[0] = 5;
+  freq_test_2[1] = 4;
+  freq_test_2[2] = 3;
+  freq_test_2[3] = 2;
+  freq_test_2[4] = 1;
+  assert(count_vocab(vocab_test_2, freq_test_2, 5, corpus_test_2, true) == 2);
+  assert(freq_test_2[0] == 9);
+  assert(freq_test_2[4] == 1);
+
+  sort_by_freq(vocab_test_2, freq_test_2, 5);
+  assert(freq_test_2[0] == 1);
+  assert(freq_test_2[4] == 9);
+  string check_3 = "efgh";
+  string check_4 = "abcd";
+  assert(string_equal(vocab_test_2[0],check_3));
+  assert(string_equal(vocab_test_2[4],check_4));
+
+  //Test Single array
+  string[] vocab_test_3 = alloc_array(string, 1);
+  vocab_test_3[0] = "bcde";
+
+  string corpus_test_3 = "abcd bcde abcd abcd abcd jfkd pwoef";
+  int[] freq_test_3 = alloc_array(int, 1);
+  freq_test_3[0] = 5;
+
+  assert(count_vocab(vocab_test_3, freq_test_3, 1, corpus_test_3, true) == 6);
+  assert(freq_test_3[0] == 6);
+
+  sort_by_freq(vocab_test_3, freq_test_3, 1);
+  assert(freq_test_3[0] == 6);
+
+  printf("All tests passed!\n");
+  return 0;
+}

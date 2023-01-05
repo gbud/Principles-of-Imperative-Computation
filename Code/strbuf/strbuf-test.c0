@@ -1,0 +1,28 @@
+/**************************************************************************/
+/*              COPYRIGHT Carnegie Mellon University 2022                 */
+/* Do not post this file or any derivative on a public site or repository */
+/**************************************************************************/
+#use <string>
+#use <conio>
+
+// You are welcome to define helper functions for your tests
+
+int main() {
+  strbuf* test1 = strbuf_new(9);
+  assert(is_strbuf(test1));
+  assert(test1->limit == 9);
+  assert(test1->len == 0);
+  assert(test1->buf[0] == '\0');
+  char[] test1add = string_to_chararray("hi world");
+  strbuf_addstr(test1, test1add);
+  assert(test1->limit == 9);
+  assert(test1->len == 8);
+  assert(test1->buf[8] == '\0');
+  char[] test1add2 = string_to_chararray("bee");
+  strbuf_add(test1, test1add2, 3);
+  assert(test1->limit > 9);
+  assert(string_equal(string_from_chararray(strbuf_str(test1)), "hi worldbee"));
+
+  printf("All tests passed!\n");
+  return 0;
+}

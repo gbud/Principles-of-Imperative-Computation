@@ -1,0 +1,218 @@
+/**************************************************************************/
+/*              COPYRIGHT Carnegie Mellon University 2022                 */
+/* Do not post this file or any derivative on a public site or repository */
+/**************************************************************************/
+/* Utility functions for working with arrays of strings
+ * Mostly specification functions, but swap is effectful
+ *
+ * 15-122 Principles of Imperative Computation */
+
+#use <string>
+#use <conio>
+
+/************************************************************************/
+/************************* BEGIN IMPLEMENTATION *************************/
+
+bool string_is_in(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+  for (int i = lo; i < hi; i++)
+  //@loop_invariant lo <= i && i <= hi;
+  {
+    if (string_equal(x, A[i])) return true;
+  }
+  return false;
+}
+
+bool string_is_sorted(string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+  for (int i = lo; i < hi-1; i++)
+  //@loop_invariant lo <= i;
+  {
+    if (!(string_compare(A[i+1], A[i]) >= 0)) return false;
+  }
+  return true;
+}
+
+void string_swap(string[] A, int i, int j)
+//@requires 0 <= i && i < \length(A);
+//@requires 0 <= j && j < \length(A);
+{
+  string tmp = A[i];
+  A[i] = A[j];
+  A[j] = tmp;
+}
+
+bool string_gt_seg(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+  for (int i = lo; i < hi; i++)
+  //@loop_invariant lo <= i && i <= hi;
+  {
+    if (!(string_compare(x, A[i]) > 0)) return false;
+  }
+  return true;
+}
+
+bool string_ge_seg(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+  for (int i = lo; i < hi; i++)
+  //@loop_invariant lo <= i && i <= hi;
+  {
+    if (!(string_compare(x, A[i]) >= 0)) return false;
+  }
+  return true;
+}
+
+bool string_lt_seg(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+  for (int i = lo; i < hi; i++)
+  //@loop_invariant lo <= i && i <= hi;
+  {
+    if (!(string_compare(x, A[i]) < 0)) return false;
+  }
+  return true;
+}
+
+bool string_le_seg(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+  for (int i = lo; i < hi; i++)
+  //@loop_invariant lo <= i && i <= hi;
+  {
+    if (!(string_compare(x, A[i]) <= 0)) return false;
+  }
+  return true;
+}
+
+bool string_gt_segs(string[] A, int lo1, int hi1,
+                    string[] B, int lo2, int hi2)
+//@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A);
+//@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B);
+{
+  for (int i = lo1; i < hi1; i++)
+    //@loop_invariant 0 <= lo1 && lo1 <= hi1;
+    for (int j = lo2; j < hi2; j++)
+      //@loop_invariant 0 <= lo2 && lo2 <= hi2;
+      if (!(string_compare(A[i], B[j]) > 0)) return false;
+  return true;
+}
+
+bool string_ge_segs(string[] A, int lo1, int hi1,
+                    string[] B, int lo2, int hi2)
+//@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A);
+//@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B);
+{
+  for (int i = lo1; i < hi1; i++)
+    //@loop_invariant 0 <= lo1 && lo1 <= hi1;
+    for (int j = lo2; j < hi2; j++)
+      //@loop_invariant 0 <= lo2 && lo2 <= hi2;
+      if (!(string_compare(A[i], B[j]) >= 0)) return false;
+  return true;
+}
+
+bool string_lt_segs(string[] A, int lo1, int hi1,
+                    string[] B, int lo2, int hi2)
+//@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A);
+//@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B);
+{
+  for (int i = lo1; i < hi1; i++)
+    //@loop_invariant 0 <= lo1 && lo1 <= hi1;
+    for (int j = lo2; j < hi2; j++)
+      //@loop_invariant 0 <= lo2 && lo2 <= hi2;
+      if (!(string_compare(A[i], B[j]) < 0)) return false;
+  return true;
+}
+
+bool string_le_segs(string[] A, int lo1, int hi1,
+                    string[] B, int lo2, int hi2)
+//@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A);
+//@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B);
+{
+  for (int i = lo1; i < hi1; i++)
+    //@loop_invariant 0 <= lo1 && lo1 <= hi1;
+    for (int j = lo2; j < hi2; j++)
+      //@loop_invariant 0 <= lo2 && lo2 <= hi2;
+      if (!(string_compare(A[i], B[j]) <= 0)) return false;
+  return true;
+}
+
+void string_print_seg(string[]A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/
+{
+  printf("array[%d,%d) = [", lo, hi);
+  for (int i = lo; i < hi; i++)
+  //@loop_invariant lo <= i && i <= hi;
+  {
+    printf("%s", A[i]);
+    if (i != hi-1) printf(", ");
+  }
+  printf("]");
+}
+
+/************************** END IMPLEMENTATION **************************/
+/************************************************************************/
+
+/************************************************************************/
+/******************************* Interface ******************************/
+
+/* string_is_in: x in A[lo,hi) */
+bool string_is_in(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo  && lo <= hi && hi <= \length(A); @*/ ;
+
+/* string_is_sorted: A[lo,hi) SORTED */
+bool string_is_sorted(string[] A, int lo, int hi)
+/*@requires 0 <= lo  && lo <= hi && hi <= \length(A); @*/ ;
+
+/* string_swap(A, i, j) has the effect of switching A[i] and A[j] */
+void string_swap(string[] A, int i, int j)
+/*@requires 0 <= i && i < \length(A) && 0 <= j && j < \length(A); @*/ ;
+
+
+/* string_gt_seg: x > A[lo,hi) */
+bool string_gt_seg(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;
+
+/* string_ge_seg: x >= A[lo,hi) */
+bool string_ge_seg(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;
+
+/* string_lt_seg: x < A[lo,hi) */
+bool string_lt_seg(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;
+
+/* string_le_seg: x <= A[lo,hi) */
+bool string_le_seg(string x, string[] A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;
+
+
+/* string_gt_segs: A[lo1,hi1) > B[lo2,hi2) */
+bool string_gt_segs(string[] A, int lo1, int hi1,
+                    string[] B, int lo2, int hi2)
+/*@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A); @*/
+/*@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B); @*/ ;
+
+/* string_ge_segs: A[lo1,hi1) >= B[lo2,hi2) */
+bool string_ge_segs(string[] A, int lo1, int hi1,
+                    string[] B, int lo2, int hi2)
+/*@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A); @*/
+/*@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B); @*/ ;
+
+/* string_lt_segs: A[lo1,hi1) < B[lo2,hi2) */
+bool string_lt_segs(string[] A, int lo1, int hi1,
+                    string[] B, int lo2, int hi2)
+/*@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A); @*/
+/*@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B); @*/ ;
+
+/* string_le_segs: A[lo1,hi1) <= B[lo2,hi2) */
+bool string_le_segs(string[] A, int lo1, int hi1,
+                    string[] B, int lo2, int hi2)
+/*@requires 0 <= lo1 && lo1 <= hi1 && hi1 <= \length(A); @*/
+/*@requires 0 <= lo2 && lo2 <= hi2 && hi2 <= \length(B); @*/ ;
+
+/* string_print_seg: prints A[lo, hi) */
+void string_print_seg(string[]A, int lo, int hi)
+/*@requires 0 <= lo && lo <= hi && hi <= \length(A); @*/ ;

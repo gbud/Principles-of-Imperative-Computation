@@ -1,0 +1,86 @@
+// gbudhija resize
+
+#use <util>
+#use <conio>
+
+int blend_pixel(pixel_t f_pixel, pixel_t s_pixel, int i, int k)
+//@ensures 0 <= get_red(\result) && get_red(\result) < 256;
+//@ensures 0 <= get_green(\result) && get_green(\result) < 256;
+//@ensures 0 <= get_blue(\result) && get_blue(\result) < 256;
+{
+    int k1 = k + 1;
+    int f_percent = (k1 - i) / k1;
+    int s_percent = i / k1;
+
+    int f_alpha = get_alpha(f_pixel) * f_percent;
+    int f_red   = get_red(f_pixel)   * f_percent;
+    int f_green = get_green(f_pixel) * f_percent;
+    int f_blue  = get_blue(f_pixel)  * f_percent;
+
+    int s_alpha = get_alpha(s_pixel) * s_percent;
+    int s_red   = get_red(s_pixel)   * s_percent;
+    int s_green = get_green(s_pixel) * s_percent;
+    int s_blue  = get_blue(s_pixel)  * s_percent;
+
+    int blent_alpha = (f_alpha + s_alpha) % 256;
+    int blent_red   = (f_red   + s_red)   % 256;
+    int blent_green = (f_green + s_green) % 256;
+    int blent_blue  = (f_blue  + s_blue)  % 256;
+
+    return make_pixel(blent_alpha, blent_red, blent_green, blent_blue);
+}
+
+pixel_t[] stretch_horizontally(pixel_t[] pixels, int width, int height, int k)
+/*@requires 0 <= k &&
+            k <= ((int_max() / height) - width) / (width - 1);
+  @*/
+//@ensures \length(\result) <= int_max();
+{
+    int stretch_width = width + ((width - 1)*k);
+    pixel_t[] horz_stretch = alloc_array(pixel_t,(width * stretch_width));
+
+    for (int j = 0; j < height; j++)
+    // loop_invariant 0 <= j;
+    {
+        for (int i = 0; i < width; i++)
+        // loop_invariant 0 <= i;
+        {
+            //@assert 0 <= j && j < height && 0 <= i && i < width;
+            int index = get_index(j, i, width, height);
+            //@assert 0 <= index && index < \length(pixels);
+
+            // if i is the last column of the row
+            if (i == width-1)
+            {
+                int stretch_index = get_index(j, stretch_width-1,
+                                              stretch_width, height);
+                horz_stretch[stretch_index] == pixels[index];
+            } else {
+                // loop through k's after column index
+                for (int t = 0; t < k+1; t++)
+                {
+                    int stretch_col = (i * (k + 1) + t);
+                    int stretch_index = get_index(j, stretch_col,
+                                                  stretch_width, height);
+                    if (t == 0)
+                    {
+                        horz_stretch[stretch_index] = pixels[index];
+                    }
+                    int blent_pixel = blend_pixel(pixels[i], pixels[i+1], t, k);
+                    horz_stretch[stretch_index] = blent_pixel;
+                }
+            }
+        }
+    }
+    return horz_stretch;
+}
+
+
+pixel_t[] upsize(pixel_t[] pixels, int width, int height, int k)
+{
+    int stretch_width = width + ((width - 1)*k);
+    pixel_t[] horz_stretch = alloc_array(pixel_t,(width * stretch_width));
+    return horz_stretch;
+}
+
+

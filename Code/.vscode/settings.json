@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "xalloc.h": "c",
+        "contracts.h": "c",
+        "chrono": "c",
+        "stdio.h": "c",
+        "hdict.h": "c",
+        "__functional_03": "c",
+        "functional": "c"
+    }
+}
